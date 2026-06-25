@@ -14,3 +14,4 @@ windows.php
 test.db
 reasonix.toml
 pnpm-lock.yaml
+pnpm-workspace.yaml

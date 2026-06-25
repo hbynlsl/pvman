@@ -1,147 +1,113 @@
 <template>
-  <div class="login-container">
-    <n-card class="login-card">
-      <template #header>
-        <h2 class="login-title">用户登录</h2>
-      </template>
-      
-      <n-form
-        ref="formRef"
-        :model="formValue"
-        :rules="rules"
-        label-placement="left"
-        label-width="auto"
-      >
-        <n-form-item label="用户名" path="username">
-          <n-input
-            v-model:value="formValue.username"
-            placeholder="请输入用户名"
-            size="large"
-          />
-        </n-form-item>
-        
-        <n-form-item label="密码" path="password">
-          <n-input
-            v-model:value="formValue.password"
-            type="password"
-            placeholder="请输入密码"
-            size="large"
-            show-password-on="click"
-            @keyup.enter="handleLogin"
-          />
-        </n-form-item>
-        
-        <n-form-item>
-          <n-button
-            type="primary"
-            size="large"
-            :loading="loading"
-            block
-            @click="handleLogin"
-          >
-            登录
-          </n-button>
-        </n-form-item>
-      </n-form>
-    </n-card>
-  </div>
+	<div class="login-page">
+		<var-space direction="column" align="center" :size="20">
+			<h2>用户登录</h2>
+
+			<var-form ref="formRef" @submit="handleLogin">
+				<var-space direction="column" :size="16">
+					<var-input
+						v-model="username"
+						placeholder="请输入用户名"
+						:rules="[(v) => !!v || '用户名不能为空']"
+						clearable
+					>
+						<template #prepend-icon>
+							<var-icon name="account-circle" />
+						</template>
+					</var-input>
+
+					<var-input
+						v-model="password"
+						type="password"
+						placeholder="请输入密码"
+						:rules="[(v) => !!v || '密码不能为空']"
+						clearable
+					>
+						<template #prepend-icon>
+							<var-icon name="lock" />
+						</template>
+					</var-input>
+
+					<var-button
+						type="primary"
+						block
+						:loading="loading"
+						loading-type="circle"
+						native-type="submit"
+					>
+						{{ loading ? "登录中..." : "登 录" }}
+					</var-button>
+
+					<var-alert v-if="errorMsg" type="danger">
+						{{ errorMsg }}
+					</var-alert>
+				</var-space>
+			</var-form>
+		</var-space>
+	</div>
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
-import message from '@/utils/message'
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/auth";
 
-const router = useRouter()
-const authStore = useAuthStore()
-const formRef = ref(null)
-const loading = ref(false)
+const router = useRouter();
+const authStore = useAuthStore();
 
-const formValue = reactive({
-  username: '',
-  password: ''
-})
+const formRef = ref(null);
+const username = ref("");
+const password = ref("");
+const loading = ref(false);
+const errorMsg = ref("");
 
-const rules = {
-  username: {
-    required: true,
-    message: '请输入用户名',
-    trigger: 'blur'
-  },
-  password: {
-    required: true,
-    message: '请输入密码',
-    trigger: 'blur'
-  }
-}
+async function handleLogin() {
+	errorMsg.value = "";
 
-const handleLogin = async () => {
-  try {
-    await formRef.value?.validate()
-  } catch (error) {
-    return
-  }
+	try {
+		// 表单校验
+		const valid = await formRef.value.validate();
+		if (!valid) return;
 
-  loading.value = true
+		loading.value = true;
 
-  try {
-    const response = await fetch('/api/v1/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        username: formValue.username,
-        password: formValue.password
-      })
-    })
+		const res = await fetch("/api/v1/login", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				username: username.value,
+				password: password.value,
+			}),
+		});
 
-    const data = await response.json()
+		const data = await res.json();
 
-    if (data.code === 10000) {
-      message.success('登录成功')
-      
-      const isAdminRole = data.data.user.category == 0
-      
-      // 保存登录状态
-      authStore.login(data.datas || { username: formValue.username }, data.token || 'demo-token', isAdminRole)
-      
-      // 根据响应消息判断跳转路由
-      if (isAdminRole) {
-        router.push('/admin')
-      } else {
-        router.push('/home')
-      }
-    } else {
-      message.error(data.msg || '登录失败，请重试')
-    }
-  } catch (error) {
-    message.error('网络错误，请稍后重试')
-  } finally {
-    loading.value = false
-  }
+		if (data.code !== 0) {
+			errorMsg.value = data.message || "登录失败";
+			return;
+		}
+
+		// 保存登录状态
+		authStore.login(
+			data.data.user,
+			data.data.token,
+			data.data.isAdmin ?? false,
+		);
+
+		// 跳转到首页
+		router.push("/");
+	} catch (e) {
+		errorMsg.value = "网络错误，请稍后重试";
+	} finally {
+		loading.value = false;
+	}
 }
 </script>
 
 <style scoped>
-.login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.login-card {
-  width: 100%;
-  max-width: 450px;
-  padding: 20px;
-}
-
-.login-title {
-  margin: 0;
-  text-align: center;
-  color: #333;
+.login-page {
+	max-width: 360px;
+	margin: 80px auto 0;
+	padding: 0 16px;
 }
 </style>
