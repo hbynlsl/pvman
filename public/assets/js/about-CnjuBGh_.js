@@ -1,0 +1,1 @@
+import{B as e,Y as t,t as n}from"./index-BZKA6PH7.js";var r={},i={id:`app`};function a(n,r){return t(),e(`div`,i,`about-view`)}var o=n(r,[[`render`,a]]);export{o as default};
