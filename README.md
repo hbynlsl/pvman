@@ -1,6 +1,6 @@
-# LiteVue · 内容管理系统
+# pvman - php+vue开发模版
 
-基于 **Webman** + **Vue 3** + **SQLite** 构建的高性能内容管理平台。
+基于 **Webman** + **Vue 3** + **SQLite** 构建的高性能开发模版。
 
 ## 技术栈
 
