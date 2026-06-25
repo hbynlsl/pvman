@@ -1,0 +1,16 @@
+/runtime
+/node_modules
+/.idea
+/.vscode
+/vendor
+*.log
+.env
+/tests/tmp
+/tests/.phpunit.result.cache
+composer.lock
+LICENSE
+windows.bat
+windows.php
+test.db
+reasonix.toml
+pnpm-lock.yaml
